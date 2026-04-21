@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ÂMÉ — Gastronomía & Culture de Prestige</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root { --primary: #5B0B23; --secondary: #DBC7C3; --bg-light: #FDF9F8; --text-dark: #2D1A1E; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); margin: 0; overflow-x: hidden; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        input::placeholder { color: #9ca3af; opacity: 0.7; }
+        .modal-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        .btn-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #5B0B23; }
+
+        .custom-range {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .custom-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            cursor: grab;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(91, 11, 35, 0.3);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .custom-range::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const Icon = ({ name, size = 24, className = "" }) => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
+        };
+
+        const SuccessModal = ({ isOpen, onClose, content }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 text-black text-left">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={onClose}></div>
+                    <div className="bg-white w-full max-w-lg relative z-10 shadow-2xl rounded-sm p-12 text-center space-y-10 modal-fade-in text-black">
+                        <div className="w-24 h-24 flex items-center justify-center border-2 border-[#5B0B23] mx-auto text-[#5B0B23]"><span className="text-5xl font-serif font-bold italic">Â</span></div>
+                        <div className="space-y-4 text-black text-center">
+                            <h2 className="text-4xl font-serif text-[#5B0B23]">{content.success.title}</h2>
+                            <div className="w-12 h-0.5 bg-[#5B0B23]/20 mx-auto"></div>
+                            <p className="text-gray-600 leading-relaxed font-serif italic text-lg px-4">{content.success.message}</p>
+                        </div>
+                        <button onClick={onClose} className="w-full py-4 text-white uppercase text-[10px] font-bold tracking-[0.4em] shadow-xl bg-[#5B0B23] hover:bg-black btn-transition">{content.success.btn}</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const UniversalCheckout = ({ isOpen, onClose, onComplete, title, subtitle, amount, details, content }) => {
+            if (!isOpen) return null;
+            const ct = content.checkout;
+            return (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 text-black text-left">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-md" onClick={onClose}></div>
+                    <div className="bg-white w-full max-w-4xl relative z-10 shadow-2xl rounded-sm overflow-hidden flex flex-col md:flex-row modal-fade-in text-black">
+                        <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors z-[260]"><Icon name="x"/></button>
+                        <div className="flex-1 p-8 md:p-12 space-y-8 bg-white text-left text-black">
+                            <div className="flex items-center space-x-3 text-[#5B0B23]"><Icon name="shield-check" size={28}/><h2 className="text-3xl font-serif leading-tight text-[#5B0B23]">{title}</h2></div>
+                            <div className="space-y-6">
+                                <div className="grid gap-5">
+                                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-[0.2em] border-b pb-1">{ct.personalData}</p>
+                                    <div className="space-y-4 text-left">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] uppercase text-gray-400 font-bold">{ct.fullName}</label>
+                                            <input type="text" className="w-full border-b border-gray-100 py-2 text-sm outline-none focus:border-[#5B0B23] transition-colors text-black" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] uppercase text-gray-400 font-bold">{ct.email}</label>
+                                                <input type="email" className="w-full border-b border-gray-100 py-2 text-sm outline-none focus:border-[#5B0B23] transition-colors text-black" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] uppercase text-gray-400 font-bold">{ct.phone}</label>
+                                                <input type="tel" className="w-full border-b border-gray-100 py-2 text-sm outline-none focus:border-[#5B0B23] transition-colors text-black" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid gap-5">
+                                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-[0.2em] border-b pb-1">{ct.paymentData}</p>
+                                    <div className="space-y-4">
+                                        <div className="relative"><Icon name="credit-card" size={18} className="absolute left-0 top-3 text-gray-300"/><input type="text" placeholder={ct.cardNumber} className="w-full border-b border-gray-100 py-3 pl-8 text-sm outline-none focus:border-[#5B0B23] transition-colors text-black" /></div>
+                                        <div className="flex gap-6"><input type="text" placeholder={ct.expiry} className="w-1/2 border-b border-gray-100 py-3 text-sm outline-none focus:border-[#5B0B23] transition-colors text-black" /><input type="text" placeholder="CVV" className="w-1/2 border-b border-gray-100 py-3 text-sm outline-none focus:border-[#5B0B23] transition-colors text-black" /></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="md:w-80 p-10 bg-[#5B0B23] text-white flex flex-col justify-center items-center text-center space-y-10">
+                            <div className="space-y-4">
+                                <h3 className="text-xl font-serif italic">{subtitle}</h3>
+                                <div className="w-12 h-0.5 bg-[#DBC7C3] mx-auto opacity-30"></div>
+                                <div className="space-y-2">
+                                    {details.map((d, i) => <p key={i} className="text-[9px] uppercase tracking-widest opacity-60">{d}</p>)}
+                                    <p className="text-4xl font-serif text-[#DBC7C3] mt-4">{amount}</p>
+                                </div>
+                            </div>
+                            <button onClick={onComplete} className="w-full py-5 font-bold uppercase text-[11px] tracking-[0.3em] shadow-2xl btn-transition bg-[#DBC7C3] text-[#5B0B23] border border-[#DBC7C3] hover:bg-white hover:text-[#5B0B23]">{ct.btnPay}</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [scrolled, setScrolled] = useState(false);
+            const [lang, setLang] = useState('es');
+            const [langMenuOpen, setLangMenuOpen] = useState(false);
+            const [selectedItinerary, setSelectedItinerary] = useState(null);
+            const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+            const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+            const [isEventCheckoutOpen, setIsEventCheckoutOpen] = useState(false);
+            const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+            
+            const [quoteData, setQuoteData] = useState({ 
+                city: 'paris', 
+                pax: 100, 
+                foodType: 'costa', 
+                showType: 'none', 
+                hasVenue: true,
+                selectedVenueId: null 
+            });
+
+            const showOptions = {
+                none: { name: "Sin Espectáculo", region: "", price: 0 },
+                costa: { name: "Susurro de Costa", region: "Costa", price: 350 },
+                sierra: { name: "Ritual de los Andes", region: "Sierra", price: 450 },
+                selva: { name: "Latido de Selva", region: "Selva", price: 400 },
+                gala: { name: "Gala Imperial ÂMÉ", region: "Todas las regiones", price: 750 }
+            };
+
+            const t = {
+                es: {
+                    nav: { home: 'Inicio', catering: 'Catering', travel: 'Viajes', about: 'Nosotros', book: 'Reservar' },
+                    hero: { sub: 'Resplandor del alma a través de la cultura', title: 'La Experiencia Peruana', title2: 'en el corazón de Francia', btn1: 'Ver Catering', btn2: 'Explorar Viajes' },
+                    cat: { 
+                        tag: 'Autenticidad sin fronteras', 
+                        title: 'Banquete Peruano Premium', 
+                        desc: 'Llevamos la esencia de las mejores picanterías y restaurantes de todo el Perú directamente a tu evento en Francia. Show incluido a partir de 100 invitados.', 
+                        detail1: 'Chefs Peruanos',
+                        detail1Desc: 'Cocineros nativos formados en las mejores escuelas de gastronomía de Lima.',
+                        detail2: 'Show y Cultura',
+                        detail2Desc: 'Espectáculos en vivo que envuelven cada bocado en una atmósfera llena de vida.',
+                        btn: 'Cotizar Evento en Francia' 
+                    },
+                    quote: { 
+                        title: 'Cotización de Evento', city: 'Ciudad', pax: 'Invitados', food: 'Estilo de Cocina', show: 'Cultura & Danzas', venue: 'Localización', summary: 'Resumen', btnBook: 'Confirmar Reserva',
+                        subtotal: 'Subtotal Pax', total: 'Total Estimado', surchargeLabel: 'Gestión', groupLabel: 'Recargo Logística', bonusLabel: 'Bonificación Show', venueLabel: 'Local Elegido',
+                        statusIncl: 'INCLUIDO',
+                        venueOptions: { true: 'Tengo Local', false: 'Necesito Local' },
+                        foodOptions: { costa: 'Costa (Base)', sierra: 'Sierra (+10€/pax)', selva: 'Selva (+12€/pax)', mix: 'Herencia ÂMÉ (Todas las regiones) (+18€/pax)' },
+                        showTitles: { none: "Sin Espectáculo", costa: "Susurro de Costa", sierra: "Ritual de los Andes", selva: "Latido de Selva", gala: "Gala Imperial ÂMÉ" }
+                    },
+                    trips: { 
+                        title: 'Turismo Vivencial Gastronómico', 
+                        tag: 'Experiencias de Autor',
+                        desc: 'Viajes diseñados para paladares exigentes. Inmersión total desde el origen con servicios VIP incluidos.',
+                        packs: [
+                            { id: 'amazonas', title: "Ruta del Cacao y Café de Selva Alta", loc: "Amazonas & San Martín", price: "3,850€", img: "https://images.unsplash.com/photo-1596395350917-8e10d297926b?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Día 1: Aromas", title: "Cata en Finca Orgánica", desc: "Arribo y cata técnica de café de especialidad con baristas locales." }, { day: "Día 2: Aguas", title: "Trekking Gocta", desc: "Caminata privada hacia la catarata." }, { day: "Día 3: Historia", title: "Kuélap y almuerzo tradicional.", desc: "Visita a la fortaleza de Kuélap en teleférico." }], includes: ["Vuelos Internacionales", "SUV Lujo", "Hotel Boutique", "Guía VIP"] },
+                            { id: 'cusco', title: "Sabores Ancestrales del Valle Sagrado", loc: "Cusco & Urubamba", price: "4,900€", img: "https://images.unsplash.com/photo-1587595301140-5a4157d6928e?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Día 1: Tierra", title: "Maras & Picnic Gourmet", desc: "Visita a las salineras de Maras con picnic de lujo." }, { day: "Día 2: Ritual Pachamanca", title: "Cocina Ancestral", desc: "Participación en cocina bajo tierra con comunidades locales." }, { day: "Día 3: Legado", title: "Machu Picchu", desc: "Tren Hiram Bingham y cena gala frente a la ciudadela." }], includes: ["Tren Hiram Bingham", "Hotel Belmond", "Vuelos Internos", "Cena de Gala"] },
+                            { id: 'lima', title: "Lima: Epicentro Gastronómico Mundial", loc: "Lima Metropolitana", price: "2,950€", img: "https://images.unsplash.com/photo-1590426189563-7da9f7c05001?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Día 1: Origen", title: "Mercados Locales", desc: "Mercados y Masterclass de Ceviche con chef estrella." }, { day: "Día 2: Vanguardia", title: "Alta Cocina", desc: "Almuerzo y cena en los restaurantes N°1 mundiales." }, { day: "Día 3: Herencia", title: "Historia del Pisco", desc: "Casonas virreinales e Historia del Pisco con catas privadas." }], includes: ["Reserva VIP Central", "Transporte Lujo SUV", "Vuelos Internacionales", "Catas"] }
+                        ] 
+                    },
+                    about: { title: 'Nuestra Historia', p1: 'ÂMÉ nació del deseo de compartir la riqueza cultural del Perú con el mundo. Somos el puente entre la tradición milenaria y la sofisticación europea.', p2: 'Cada evento y cada viaje lleva nuestro sello de excelencia y respeto por las raíces que nos definen como cultura viva.', stat1: 'INSUMOS ORGÁNICOS', stat2: 'TRADICIÓN VIVA' },
+                    success: { title: '¡Muchas Gracias!', message: 'Su solicitud ha sido procesada con éxito bajo el sello ÂMÉ. Nos contactaremos en las próximas 24 horas.', btn: 'Cerrar y Volver al Inicio' },
+                    footer: { desc: 'ÂMÉ — Conectando las almas de Perú y Francia a través de la cultura y el sabor.', services: 'Servicios', contact: 'Contacto' },
+                    checkout: { title: 'Finalizar Compra', personalData: 'Datos del Cliente', fullName: 'Nombre Completo / Razón Social', email: 'Correo Electrónico', phone: 'Teléfono', paymentData: 'Pago Seguro', cardNumber: 'Número de Tarjeta', expiry: 'MM/AA', btnPay: 'CONFIRMAR Y PAGAR' }
+                },
+                en: {
+                    nav: { home: 'Home', catering: 'Catering', travel: 'Trips', about: 'About Us', book: 'Book Now' },
+                    hero: { sub: 'Soul radiance through culture', title: 'The Peruvian Experience', title2: 'in the heart of France', btn1: 'View Catering', btn2: 'Explore Trips' },
+                    cat: { 
+                        tag: 'Authenticity without borders', 
+                        title: 'Premium Peruvian Banquet', 
+                        desc: 'We bring the essence of the best picanterías and restaurants from all over Peru directly to your event in France. Show included for 100+ guests.', 
+                        detail1: 'Peruvian Chefs',
+                        detail1Desc: 'Native chefs trained in the best culinary schools of Lima.',
+                        detail2: 'Show & Culture',
+                        detail2Desc: 'Live performances that wrap every bite in a vibrant atmosphere.',
+                        btn: 'Get Event Quote in France' 
+                    },
+                    quote: { 
+                        title: 'Event Quotation', city: 'City', pax: 'Guests', food: 'Cuisine Style', show: 'Culture & Dance', venue: 'Location', summary: 'Summary', btnBook: 'Confirm Booking',
+                        subtotal: 'Pax Subtotal', total: 'Estimated Total', surchargeLabel: 'Management', groupLabel: 'Logistics Surcharge', bonusLabel: 'Show Bonus', venueLabel: 'Selected Venue',
+                        statusIncl: 'INCLUDED',
+                        venueOptions: { true: 'I have a venue', false: 'I need a venue' },
+                        foodOptions: { costa: 'Coast (Base)', sierra: 'Highlands (+10€/pax)', selva: 'Jungle (+12€/pax)', mix: 'ÂMÉ Heritage (All regions) (+18€/pax)' },
+                        showTitles: { none: "No Show", costa: "Coastal Whisper", sierra: "Andean Ritual", selva: "Jungle Heartbeat", gala: "ÂMÉ Imperial Gala" }
+                    },
+                    trips: { 
+                        title: 'Experiential Gastronomic Tourism', 
+                        tag: 'Author Experiences',
+                        desc: 'Travel designed for demanding palates. Total immersion from the origin with VIP services included.',
+                        packs: [
+                            { id: 'amazonas', title: "Cocoa and Coffee High Jungle Route", loc: "Amazonas & San Martín", price: "3,850€", img: "https://images.unsplash.com/photo-1596395350917-8e10d297926b?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Day 1: Scents", title: "Organic Farm Tasting", desc: "Arrival and technical specialty coffee tasting with local baristas." }, { day: "Day 2: Waters", title: "Gocta Trekking", desc: "Private hike to the waterfall." }, { day: "Day 3: History", title: "Kuelap Experience", desc: "Visit to Kuelap fortress via cable car and traditional lunch." }], includes: ["International Flights", "Luxury SUV", "Boutique Hotel", "VIP Guide"] },
+                            { id: 'cusco', title: "Ancestral Flavors of the Sacred Valley", loc: "Cusco & Urubamba", price: "4,900€", img: "https://images.unsplash.com/photo-1587595301140-5a4157d6928e?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Day 1: Earth", title: "Maras & Gourmet Picnic", desc: "Visit to Maras salt mines with luxury picnic." }, { day: "Day 2: Pachamanca", title: "Ancestral Cooking", desc: "Underground cooking ritual with local communities." }, { day: "Day 3: Legacy", title: "Machu Picchu", desc: "Hiram Bingham Train and gala dinner overlooking the citadel." }], includes: ["Hiram Bingham Train", "Belmond Hotel", "Internal Flights", "Gala Dinner"] },
+                            { id: 'lima', title: "Lima: Global Gastronomic Epicenter", loc: "Metropolitan Lima", price: "2,950€", img: "https://images.unsplash.com/photo-1590426189563-7da9f7c05001?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Day 1: Origin", title: "Local Markets", desc: "Markets and Ceviche Masterclass with a star chef." }, { day: "Day 2: Avant-Garde", title: "Fine Dining", desc: "Lunch and dinner at world-ranking No. 1 restaurants." }, { day: "Day 3: Heritage", title: "Pisco History", desc: "Colonial mansions and Pisco history with private tastings." }], includes: ["Central VIP Reservation", "Luxury SUV Transport", "International Flights", "Tastings"] }
+                        ] 
+                    },
+                    about: { title: 'Our Story', p1: 'ÂMÉ was born from the desire to share Peru\'s cultural richness with the world. We are the bridge between millenary tradition and European sophistication.', p2: 'Every event and every trip carries our seal of excellence and respect for the roots that define us as a living culture.', stat1: 'ORGANIC INGREDIENTS', stat2: 'LIVING TRADITION' },
+                    success: { title: 'Thank You!', message: 'Your request has been successfully processed under the ÂMÉ seal. We will contact you within 24 hours.', btn: 'Close and Return Home' },
+                    footer: { desc: 'ÂMÉ — Connecting the souls of Peru and France through culture and flavor.', services: 'Services', contact: 'Contact' },
+                    checkout: { title: 'Checkout', personalData: 'Client Data', fullName: 'Full Name / Company Name', email: 'Email Address', phone: 'Phone Number', paymentData: 'Secure Payment', cardNumber: 'Card Number', expiry: 'MM/YY', btnPay: 'CONFIRMER & PAY' }
+                },
+                fr: {
+                    nav: { home: 'Accueil', catering: 'Traiteur', travel: 'Voyages', about: 'À Propos', book: 'Réserver' },
+                    hero: { sub: 'L\'éclat de l\'âme à travers la culture', title: 'L\'Expérience Péruvienne', title2: 'au cœur de la France', btn1: 'Voir Traiteur', btn2: 'Explorer Voyages' },
+                    cat: { 
+                        tag: 'Authenticité sin frontières', 
+                        title: 'Banquet Péruvien Premium', 
+                        desc: 'Nous apportons l\'essence des meilleures picanterías du Pérou directamente à votre événement en France. Spectacle inclus dès 100 invités.', 
+                        detail1: 'Chefs Péruviens',
+                        detail1Desc: 'Chefs natifs formés dans les meilleures écoles de gastronomie de Lima.',
+                        detail2: 'Spectacle et Culture',
+                        detail2Desc: 'Spectacles vivants qui enveloppent chaque bouchée d\'une atmosphère vibrante.',
+                        btn: 'Devis Événement France' 
+                    },
+                    quote: { 
+                        title: 'Devis de l\'Événement', city: 'Ville', pax: 'Invités', food: 'Style de Cuisine', show: 'Culture et Danses', venue: 'Localisation', summary: 'Résumé', btnBook: 'Confirmer Réservation',
+                        subtotal: 'Sous-total Pax', total: 'Total Estimé', surchargeLabel: 'Gestion', groupLabel: 'Surcharge Logistique', bonusLabel: 'Bonus Spectacle', venueLabel: 'Lieu Choisi',
+                        statusIncl: 'INCLUS',
+                        venueOptions: { true: 'J\'ai un lieu', false: 'Besoin d\'un lieu' },
+                        foodOptions: { costa: 'Côte (Base)', sierra: 'Sierra (+10€/pax)', selva: 'Amazonie (+12€/pax)', mix: 'Héritage ÂMÉ (Toutes régions) (+18€/pax)' },
+                        showTitles: { none: "Pas de Spectacle", costa: "Murmure de la Côte", sierra: "Rituel des Andes", selva: "Battement de l'Amazonie", gala: "Gala Impérial ÂMÉ" }
+                    },
+                    trips: { 
+                        title: 'Tourisme Expérientiel Gastronomique', 
+                        tag: 'Expériences d\'Auteur',
+                        desc: 'Voyages conçus pour les palais exigeants. Immersion totale dès l\'origine avec services VIP inclus.',
+                        packs: [
+                            { id: 'amazonas', title: "Route du Cacao et du Café de la Haute Jungle", loc: "Amazonas & San Martín", price: "3,850€", img: "https://images.unsplash.com/photo-1596395350917-8e10d297926b?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Jour 1: Arômes", title: "Dégustation à la Ferme", desc: "Arrivée et dégustation technique de café de especialidad." }, { day: "Jour 2: Eaux", title: "Trekking Gocta", desc: "Randonnée privée vers la cascade." }, { day: "Jour 3: Histoire", title: "Expérience Kuélap", desc: "Visite de la forteresse de Kuélap et déjeuner traditionnel." }], includes: ["Vols Internationaux", "SUV de Luxe", "Hôtel Boutique", "Guide VIP"] },
+                            { id: 'cusco', title: "Saveurs Ancestrales de la Vallée Sacrée", loc: "Cusco & Urubamba", price: "4,900€", img: "https://images.unsplash.com/photo-1587595301140-5a4157d6928e?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Jour 1: Terre", title: "Maras & Pique-nique Gourmet", desc: "Visite des salines de Maras avec pique-nique de luxe." }, { day: "Jour 2: Pachamanca", title: "Cuisine Ancestrale", desc: "Participation à la cuisine souterraine avec les communautés locales." }, { day: "Jour 3: Héritage", title: "Machu Picchu", desc: "Train Hiram Bingham et dîner de gala face à la citadelle." }], includes: ["Train Hiram Bingham", "Hôtel Belmond", "Vols Internes", "Dîner de Gala"] },
+                            { id: 'lima', title: "Lima: Épicentre Gastronomique Mondial", loc: "Lima Métropolitaine", price: "2,950€", img: "https://images.unsplash.com/photo-1590426189563-7da9f7c05001?auto=format&fit=crop&w=800&q=80", itinerary: [{ day: "Jour 1: Origine", title: "Marchés Locaux", desc: "Marchés et Masterclass de Ceviche avec un chef étoilé." }, { day: "Jour 2: Avant-garde", title: "Haute Gastronomie", desc: "Déjeuner et dîner dans les restaurants classés N°1 mondiaux." }, { day: "Jour 3: Héritage", title: "Histoire du Pisco", desc: "Demeures coloniales et dégustations privées de Pisco." }], includes: ["Réservation VIP Central", "Transport SUV Luxe", "Vols Internationaux", "Dégustations"] }
+                        ] 
+                    },
+                    about: { title: 'Notre Histoire', p1: 'ÂMÉ est né du désir de partager la richesse culturelle du Pérou avec le monde. Nous sommes le pont entre la tradition millénaire et la sophistication européenne.', p2: 'Chaque événement et chaque voyage porte notre sceau d\'excellence et de respect pour les racines qui nous définissent.', stat1: 'PRODUITS BIOLOGIQUES', stat2: 'TRADITION VIVANTE' },
+                    success: { title: 'Merci Beaucoup !', message: 'Votre demande a été traitée avec succès sous le sceau ÂMÉ. Nous vous contacterons sous 24 heures.', btn: 'Fermer et Retour' },
+                    footer: { desc: 'ÂMÉ — Connecter les âmes du Pérou et de la France par la culture et la saveur.', services: 'Services', contact: 'Contact' },
+                    checkout: { title: 'Finaliser l\'Achat', personalData: 'Données Client', fullName: 'Nom Complet / Raison Sociale', email: 'E-mail', phone: 'Téléphone', paymentData: 'Paiement Sécurisé', cardNumber: 'Numéro de Carte', expiry: 'MM/AA', btnPay: 'CONFIRMER ET PAYER' }
+                }
+            };
+
+            const venueTranslations = {
+                es: {
+                    paris: {
+                        small: [
+                            { id: 'p1', name: 'El Jardín Secreto', desc: 'Hotel particulier íntimo con un jardín francés de ensueño.', price: 850 },
+                            { id: 'p2', name: 'Galería Prestige Loft', desc: 'Espacio histórico con techos de cristal en el centro.', price: 1200 },
+                            { id: 'p3', name: 'El Atelier Montmartre', desc: 'Vistas bohemias y ambiente artístico exclusivo.', price: 950 }
+                        ],
+                        medium: [
+                            { id: 'p4', name: 'Salón de los Espejos', desc: 'Elegancia neoclásica frente a la majestuosa Ópera.', price: 2500 },
+                            { id: 'p5', name: 'Residencia Real', desc: 'Mansión histórica restaurada con salones de lujo.', price: 2900 },
+                            { id: 'p6', name: 'Pabellón Étoile', desc: 'Modernidad sofisticada cerca del Arco del Triunfo.', price: 2800 }
+                        ],
+                        large: [
+                            { id: 'p7', name: 'Castillo Alouettes', desc: 'Palacio histórico ideal para grandes galas de prestigio.', price: 5500 },
+                            { id: 'p8', name: 'Gran Salón Palacio', desc: 'Espacio arquitectónico icónico y versátil.', price: 7200 },
+                            { id: 'p9', name: 'Jardines Museo Rodin', desc: 'Gala señorial rodeada de arte y jardines reales.', price: 6800 }
+                        ]
+                    },
+                    lyon: {
+                        small: [
+                            { id: 'l1', name: 'Corte de los Loges', desc: 'Renacimiento puro en el corazón del Viejo Lyon.', price: 700 },
+                            { id: 'l2', name: 'Terraza Ródano', desc: 'Vistas panorámicas impresionantes al río.', price: 900 },
+                            { id: 'l3', name: 'Bóveda Célestins', desc: 'Cueva de piedra rústica con calidez inigualable.', price: 600 }
+                        ],
+                        medium: [
+                            { id: 'l4', name: 'Palacio de la Bolsa', desc: 'Majestuosidad histórica en el centro financiero.', price: 2100 },
+                            { id: 'l5', name: 'Hangar Confluence', desc: 'Diseño industrial vanguardista y muy espacioso.', price: 1800 },
+                            { id: 'l6', name: 'Castillo de la Verrière', desc: 'Entorno verde y sofisticación rural.', price: 2400 }
+                        ],
+                        large: [
+                            { id: 'l7', name: 'Eurexpo Hall de Élite', desc: 'Infraestructura de primer nivel para galas masivas.', price: 4500 },
+                            { id: 'l8', name: 'Dominio de las Lilas', desc: 'Finca privada exclusiva con carpa de cristal.', price: 3900 },
+                            { id: 'l9', name: 'Estadio Lyon VIP', desc: 'Máxima modernidad para grandes aforos.', price: 5200 }
+                        ]
+                    }
+                },
+                en: {
+                    paris: {
+                        small: [
+                            { id: 'p1', name: 'The Secret Garden', desc: 'Intimate private mansion with a dreamlike French garden.', price: 850 },
+                            { id: 'p2', name: 'Prestige Loft Gallery', desc: 'Historical space with glass ceilings in the city center.', price: 1200 },
+                            { id: 'p3', name: 'Montmartre Atelier', desc: 'Bohemian views and exclusive artistic atmosphere.', price: 950 }
+                        ],
+                        medium: [
+                            { id: 'p4', name: 'Mirror Ballroom', desc: 'Neoclassical elegance across from the Opera house.', price: 2500 },
+                            { id: 'p5', name: 'Royal Residence', desc: 'Restored historical mansion with luxury salons.', price: 2900 },
+                            { id: 'p6', name: 'Etoile Pavilion', desc: 'Sophisticated modernity near the Arc de Triomphe.', price: 2800 }
+                        ],
+                        large: [
+                            { id: 'p7', name: 'Alouettes Castle', desc: 'Historic palace ideal for major prestige galas.', price: 5500 },
+                            { id: 'p8', name: 'Grand Palais Hall', desc: 'Iconic architectural space for maximum prestige.', price: 7200 },
+                            { id: 'p9', name: 'Rodin Museum Garden', desc: 'Stately gala surrounded by art and royal gardens.', price: 6800 }
+                        ]
+                    },
+                    lyon: {
+                        small: [
+                            { id: 'l1', name: 'Loges Court', desc: 'Pure Renaissance in the heart of Old Lyon.', price: 700 },
+                            { id: 'l2', name: 'Rhone Terrace', desc: 'Stunning river views and high-end atmosphere.', price: 900 },
+                            { id: 'l3', name: 'Celestins Vault', desc: 'Rustic stone vault with unparalleled warmth.', price: 600 }
+                        ],
+                        medium: [
+                            { id: 'l4', name: 'Bourse Palace', desc: 'Historical majesty in the financial center.', price: 2100 },
+                            { id: 'l5', name: 'Confluence Hangar', desc: 'Avant-garde industrial design and very spacious.', price: 1800 },
+                            { id: 'l6', name: 'Glass Castle', desc: 'Green surroundings and rural sophistication.', price: 2400 }
+                        ],
+                        large: [
+                            { id: 'l7', name: 'Eurexpo Elite Hall', desc: 'Top-tier infrastructure for massive elite galas.', price: 4500 },
+                            { id: 'l8', name: 'Lilas Estate', desc: 'Exclusive private estate with a crystal tent.', price: 3900 },
+                            { id: 'l9', name: 'Lyon Stadium VIP', desc: 'The peak of modernity for large events.', price: 5200 }
+                        ]
+                    }
+                },
+                fr: {
+                    paris: {
+                        small: [
+                            { id: 'p1', name: 'Le Jardin Secret', desc: 'Hôtel particulier intime avec un jardin à la française.', price: 850 },
+                            { id: 'p2', name: 'Galerie Prestige Loft', desc: 'Espace historique avec verrières au centre de Paris.', price: 1200 },
+                            { id: 'p3', name: 'L’Atelier Montmartre', desc: 'Vues bohèmes et atmosphère artistique exclusive.', price: 950 }
+                        ],
+                        medium: [
+                            { id: 'p4', name: 'Le Salon des Miroirs', desc: 'Élégance néoclassique face à l\'Opéra de Paris.', price: 2500 },
+                            { id: 'p5', name: 'Résidence Royale', desc: 'Hôtel de luxe restauré avec salons de prestige.', price: 2900 },
+                            { id: 'p6', name: 'Le Pavillon Étoile', desc: 'Modernité sophistiquée près de l\'Arc de Triomphe.', price: 2800 }
+                        ],
+                        large: [
+                            { id: 'p7', name: 'Château des Alouettes', desc: 'Palais historique idéal pour les grandes galas.', price: 5500 },
+                            { id: 'p8', name: 'Le Grand Palais Hall', desc: 'Espace architectural iconique du prestige français.', price: 7200 },
+                            { id: 'p9', name: 'Jardin du Musée Rodin', desc: 'Gala majestueux entouré d\'art et de verdure.', price: 6800 }
+                        ]
+                    },
+                    lyon: {
+                        small: [
+                            { id: 'l1', name: 'La Cour des Loges', desc: 'Renaissance pure au cœur du Vieux Lyon.', price: 700 },
+                            { id: 'l2', name: 'Terrasse du Rhône', desc: 'Vues panoramiques sur le fleuve et ambiance chic.', price: 900 },
+                            { id: 'l3', name: 'Le Caveau des Célestins', desc: 'Voûte en pierre rustique à l\'accueil incomparable.', price: 600 }
+                        ],
+                        medium: [
+                            { id: 'l4', name: 'Palais de la Bourse', desc: 'Majesté historique au centre financier de Lyon.', price: 2100 },
+                            { id: 'l5', name: 'Le Hangar Confluence', desc: 'Design industriel d\'avant-garde et très spacieux.', price: 1800 },
+                            { id: 'l6', name: 'Château de la Verrière', desc: 'Cadre verdoyant et sophistication rurale.', price: 2400 }
+                        ],
+                        large: [
+                            { id: 'l7', name: 'Eurexpo Elite Hall', desc: 'Infrastructure de haut niveau pour galas massifs.', price: 4500 },
+                            { id: 'l8', name: 'Domaine des Lilas', desc: 'Domaine privé exclusif avec chapiteau en cristal.', price: 3900 },
+                            { id: 'l9', name: 'Stade de Lyon VIP', desc: 'Le sommet de la modernité pour grands volumes.', price: 5200 }
+                        ]
+                    }
+                }
+            };
+
+            const content = t[lang] || t.es;
+
+            const currentVenues = useMemo(() => {
+                const category = quoteData.pax < 120 ? 'small' : quoteData.pax < 280 ? 'medium' : 'large';
+                const venueData = venueTranslations[lang] || venueTranslations.es;
+                return venueData[quoteData.city][category];
+            }, [quoteData.city, quoteData.pax, lang]);
+
+            const calculation = useMemo(() => {
+                let base = 45;
+                let foodExtra = 0;
+                const isSmallGroup = quoteData.pax < 100;
+                if (quoteData.foodType === 'sierra') foodExtra = isSmallGroup ? 15 : 10;
+                else if (quoteData.foodType === 'selva') foodExtra = isSmallGroup ? 18 : 12;
+                else if (quoteData.foodType === 'mix') foodExtra = isSmallGroup ? 25 : 18;
+                
+                let showPrice = showOptions[quoteData.showType].price || 0;
+                let showBonus = 0;
+                if (quoteData.showType !== 'none') {
+                    if (quoteData.showType === 'gala') { if (quoteData.pax >= 200) showBonus = -showPrice; }
+                    else { if (quoteData.pax >= 100) showBonus = -showPrice; }
+                }
+
+                let locFixed = quoteData.city === 'paris' ? 300 : 220;
+                let groupSurcharge = isSmallGroup ? 250 : 0;
+                let venueCost = 0;
+                if (!quoteData.hasVenue && quoteData.selectedVenueId) {
+                    const found = currentVenues.find(v => v.id === quoteData.selectedVenueId);
+                    venueCost = found ? found.price : 0;
+                }
+                
+                const total = ((base + foodExtra) * quoteData.pax) + locFixed + showPrice + showBonus + groupSurcharge + venueCost;
+                return { base: base + foodExtra, total, locFixed, showPrice, showBonus, groupSurcharge, venueCost };
+            }, [quoteData, currentVenues]);
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const scrollTo = (id) => {
+                const element = document.getElementById(id);
+                if (element) window.scrollTo({ top: element.offsetTop - 80, behavior: 'smooth' });
+            };
+
+            const handleCloseSuccess = () => {
+                setIsSuccessOpen(false);
+                setSelectedItinerary(null);
+                setIsQuoteOpen(false);
+                setIsCheckoutOpen(false);
+                setIsEventCheckoutOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            return (
+                <div className="font-sans antialiased text-black bg-[#FDF9F8]">
+                    {/* Barra de navegación con Blur Efecto Glassmorphism al bajar */}
+                    <nav className={`fixed w-full z-[100] transition-all duration-500 ${scrolled ? 'bg-white/70 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-8'}`}>
+                        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center text-black">
+                            <div className="flex items-center space-x-2 cursor-pointer text-black" onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
+                                <div className={`w-8 h-8 flex items-center justify-center border border-current ${scrolled ? 'text-[#5B0B23]' : 'text-white'}`}><span className="text-lg font-serif font-bold italic">Â</span></div>
+                                <span className={`text-xl font-serif tracking-[0.2em] uppercase ${scrolled ? 'text-[#5B0B23]' : 'text-white'}`}>ÂMÉ</span>
+                            </div>
+                            <div className="hidden md:flex space-x-8 items-center text-[10px] uppercase font-bold tracking-[0.1em] text-black">
+                                {['home', 'catering', 'travel', 'about'].map(k => (
+                                    <button key={k} onClick={() => k==='home'?window.scrollTo({top:0, behavior:'smooth'}):scrollTo(k==='travel'?'viajes':k==='about'?'nosotros':'catering')} className={`btn-transition hover:opacity-70 ${scrolled ? 'text-black' : 'text-white'}`}>{content.nav[k]}</button>
+                                ))}
+                                <div className="relative text-black">
+                                    <button onClick={() => setLangMenuOpen(!langMenuOpen)} className={`flex items-center space-x-2 px-3 py-1 border border-current rounded-full ${scrolled ? 'text-black' : 'text-white'}`}><Icon name="globe" size={12}/><span>{lang.toUpperCase()}</span><Icon name="chevron-down" size={10}/></button>
+                                    {langMenuOpen && (
+                                        <div className="absolute right-0 mt-3 w-32 bg-white shadow-2xl py-3 flex flex-col items-center border border-gray-100 z-50 text-black">
+                                            {['es', 'en', 'fr'].map((l) => (
+                                                <button key={l} onClick={() => { setLang(l); setLangMenuOpen(false); }} className="w-full py-2 hover:bg-gray-50 uppercase text-[10px] font-bold text-black transition-colors">{l === 'es' ? 'Español' : l === 'en' ? 'English' : 'Français'}</button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <button onClick={() => scrollTo('catering')} className="text-white px-8 py-2.5 rounded-full shadow-lg bg-[#5B0B23] hover:bg-black btn-transition font-bold tracking-widest uppercase text-[10px]">{content.nav.book}</button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <SuccessModal isOpen={isSuccessOpen} onClose={handleCloseSuccess} content={content} />
+                    <UniversalCheckout 
+                        isOpen={isCheckoutOpen} 
+                        onClose={() => setIsCheckoutOpen(false)} 
+                        onComplete={() => { setIsCheckoutOpen(false); setIsSuccessOpen(true); }} 
+                        title={content.checkout.title} 
+                        subtitle={selectedItinerary?.title} 
+                        amount={selectedItinerary?.price} 
+                        details={[`Destino: ${selectedItinerary?.loc}`]} 
+                        content={content} 
+                    />
+                    <UniversalCheckout 
+                        isOpen={isEventCheckoutOpen} 
+                        onClose={() => setIsEventCheckoutOpen(false)} 
+                        onComplete={() => { setIsEventCheckoutOpen(false); setIsSuccessOpen(true); }} 
+                        title={content.quote.title} 
+                        subtitle="Premium Event" 
+                        amount={`${calculation.total}€`} 
+                        details={[`${content.quote.pax}: ${quoteData.pax}`]} 
+                        content={content} 
+                    />
+
+                    {/* Modal Itinerario Viaje */}
+                    {selectedItinerary && (
+                        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 text-black text-left">
+                            <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setSelectedItinerary(null)}></div>
+                            <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto relative z-10 shadow-2xl flex flex-col md:grid md:grid-cols-5 rounded-sm modal-fade-in text-black">
+                                <button onClick={() => setSelectedItinerary(null)} className="absolute top-6 right-6 text-white md:text-gray-400 z-50"><Icon name="x" size={28}/></button>
+                                <div className="md:col-span-2 h-72 md:h-full relative overflow-hidden text-left text-black">
+                                    <img src={selectedItinerary.img} className="w-full h-full object-cover" alt="Viaje" />
+                                    <div className="absolute inset-0 bg-black/30 flex items-end p-8 text-white text-left font-serif text-3xl"><h3>{selectedItinerary.title}</h3></div>
+                                </div>
+                                <div className="md:col-span-3 p-8 md:p-12 space-y-10 flex flex-col justify-between bg-white text-left text-black">
+                                    <div className="space-y-8 text-black text-left">
+                                        <h4 className="text-xs uppercase font-bold tracking-widest text-[#5B0B23] border-b pb-2 text-left">Ruta Detallada</h4>
+                                        <div className="space-y-6 text-black">
+                                            {selectedItinerary.itinerary.map((it, i) => (
+                                                <div key={i} className="flex gap-4 text-black">
+                                                    <div className="w-6 h-6 rounded-full bg-[#5B0B23] text-white flex items-center justify-center text-[10px] shrink-0 font-bold">{i+1}</div>
+                                                    <div className="text-left">
+                                                        <p className="text-[10px] font-bold text-gray-300 uppercase">{it.day}</p>
+                                                        <h5 className="font-serif text-[#5B0B23] text-lg">{it.title}</h5>
+                                                        <p className="text-sm text-gray-500 italic leading-relaxed">{it.desc}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="bg-[#FDF9F8] p-6 border border-gray-100 rounded-sm text-left text-black">
+                                            <h5 className="text-[10px] uppercase font-bold text-gray-400 mb-4 tracking-widest text-left">Servicios VIP Incluidos:</h5>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[9px] uppercase text-left text-black">
+                                                {selectedItinerary.includes.map((inc, i) => (
+                                                    <div key={i} className="flex items-center tracking-tighter text-left text-black"><Icon name="check-circle" size={10} className="text-green-500 mr-2 shrink-0"/> {inc}</div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setIsCheckoutOpen(true)} className="w-full py-4 bg-[#5B0B23] text-white font-bold uppercase text-[10px] tracking-widest hover:bg-black btn-transition shadow-lg text-center mt-6">COMPRAR VIAJE — {selectedItinerary.price}</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal Cotización Catering */}
+                    {isQuoteOpen && (
+                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 md:p-6 text-black text-left">
+                            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setIsQuoteOpen(false)}></div>
+                            <div className="bg-white w-full max-w-7xl max-h-[95vh] overflow-y-auto relative z-10 shadow-2xl rounded-sm flex flex-col lg:flex-row modal-fade-in text-black">
+                                <button onClick={() => setIsQuoteOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors"><Icon name="x" size={24}/></button>
+                                
+                                <div className="flex-1 p-8 md:p-12 space-y-10 overflow-y-auto">
+                                    <h2 className="text-3xl font-serif text-[#5B0B23] leading-tight text-left">{content.quote.title}</h2>
+                                    <div className="grid md:grid-cols-2 gap-10">
+                                        <div className="space-y-6 text-black text-left">
+                                            <div>
+                                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest block mb-2">{content.quote.city}</label>
+                                                <div className="flex gap-2 text-left">{['paris', 'lyon'].map(c => (
+                                                    <button key={c} onClick={() => setQuoteData({...quoteData, city: c, selectedVenueId: null})} className={`flex-1 py-3 border text-[10px] uppercase font-bold tracking-widest btn-transition ${quoteData.city === c ? 'bg-[#5B0B23] text-white' : 'border-gray-200 text-gray-400'}`}>{c}</button>
+                                                ))}</div>
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between items-center mb-2 text-left">
+                                                    <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">{content.quote.pax}</label>
+                                                    <div className="flex items-center space-x-6 text-left">
+                                                        <button onClick={() => setQuoteData(prev => ({...prev, pax: Math.max(20, prev.pax - 1)}))} className="text-2xl font-bold text-[#5B0B23] hover:opacity-50 transition-all px-2"><Icon name="minus" size={18} /></button>
+                                                        <button onClick={() => setQuoteData(prev => ({...prev, pax: Math.min(500, prev.pax + 1)}))} className="text-2xl font-bold text-[#5B0B23] hover:opacity-50 transition-all px-2"><Icon name="plus" size={18} /></button>
+                                                    </div>
+                                                </div>
+                                                <input type="range" min="20" max="500" step="1" value={quoteData.pax} onChange={(e) => setQuoteData({...quoteData, pax: parseInt(e.target.value)})} className="custom-range" />
+                                                <div className="text-xl font-serif text-[#5B0B23] mt-2 font-bold tracking-tight text-left">{quoteData.pax} {content.quote.pax}</div>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest block mb-2">{content.quote.food}</label>
+                                                <select className="w-full p-4 border border-gray-100 text-[10px] uppercase font-bold tracking-widest outline-none bg-white text-black" value={quoteData.foodType} onChange={(e) => setQuoteData({...quoteData, foodType: e.target.value})}>
+                                                    {Object.entries(content.quote.foodOptions).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest block mb-2">{content.quote.venue}</label>
+                                                <div className="flex gap-2 mb-4 text-left text-black">
+                                                    <button onClick={() => setQuoteData({...quoteData, hasVenue: true, selectedVenueId: null})} className={`flex-1 py-3 border text-[10px] uppercase font-bold tracking-widest btn-transition ${quoteData.hasVenue ? 'bg-[#5B0B23] text-white' : 'border-gray-200 text-gray-400'}`}>{content.quote.venueOptions.true}</button>
+                                                    <button onClick={() => setQuoteData({...quoteData, hasVenue: false})} className={`flex-1 py-3 border text-[10px] uppercase font-bold tracking-widest btn-transition ${!quoteData.hasVenue ? 'bg-[#5B0B23] text-white' : 'border-gray-200 text-gray-400'}`}>{content.quote.venueOptions.false}</button>
+                                                </div>
+                                                {!quoteData.hasVenue && (
+                                                    <div className="space-y-3 animate-in slide-in-from-top-2 duration-300 text-left text-black">
+                                                        {currentVenues.map((v) => (
+                                                            <div key={v.id} onClick={() => setQuoteData({...quoteData, selectedVenueId: v.id})} className={`p-4 border rounded-sm cursor-pointer btn-transition flex flex-col group ${quoteData.selectedVenueId === v.id ? 'border-[#5B0B23] bg-[#FAF7F6] shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+                                                                <div className="flex justify-between items-center mb-1 text-left font-serif text-base">
+                                                                    <h4 className="group-hover:underline text-[#5B0B23]">{v.name}</h4>
+                                                                    <span className="text-[10px] font-bold text-gray-400">+{v.price}€</span>
+                                                                </div>
+                                                                <p className="text-[10px] text-gray-500 italic leading-snug">{v.desc}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-6 text-black text-left">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] uppercase font-bold text-[#5B0B23] tracking-widest block border-b pb-2 text-left">{content.quote.show}:</label>
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {Object.entries(showOptions).map(([k, v]) => {
+                                                        const isIncluded = (k === 'gala' && quoteData.pax >= 200) || (k !== 'none' && k !== 'gala' && quoteData.pax >= 100);
+                                                        return (
+                                                            <div key={k} onClick={() => setQuoteData({...quoteData, showType: k})} className={`p-4 border rounded-sm cursor-pointer btn-transition flex justify-between items-center ${quoteData.showType === k ? 'border-[#5B0B23] bg-[#FAF7F6] shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+                                                                <div className="flex flex-col text-left">
+                                                                    <span className="text-xs font-bold text-black">{content.quote.showTitles[k]}</span>
+                                                                    {v.region && <span className="text-[9px] uppercase tracking-widest text-[#5B0B23] opacity-60">{v.region}</span>}
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    {isIncluded ? <span className="text-[8px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-sm border border-green-100">{content.quote.statusIncl}</span> : k !== 'none' && <span className="text-[10px] font-bold text-gray-400">+{v.price}€</span>}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="w-full lg:w-96 p-10 bg-[#5B0B23] text-white flex flex-col justify-between shrink-0 text-center">
+                                    <div className="space-y-10">
+                                        <h3 className="text-2xl font-serif italic border-b border-white/20 pb-4">{content.quote.summary}</h3>
+                                        <div className="space-y-6 text-sm">
+                                            <div className="flex justify-between items-end border-b border-white/10 pb-4 opacity-80">
+                                                <span className="uppercase text-[10px] tracking-widest">{content.quote.subtotal}</span>
+                                                <span className="text-lg font-serif">{calculation.base}€/pax</span>
+                                            </div>
+                                            <div className="space-y-3 opacity-60 uppercase text-[9px] tracking-[0.1em]">
+                                                <div className="flex justify-between"><span>{content.quote.surchargeLabel} {quoteData.city}</span><span>+{calculation.locFixed}€</span></div>
+                                                {calculation.venueCost > 0 && <div className="flex justify-between"><span>{content.quote.venueLabel}</span><span>+{calculation.venueCost}€</span></div>}
+                                                {calculation.groupSurcharge > 0 && <div className="flex justify-between text-[#DBC7C3]"><span>{content.quote.groupLabel}</span><span>+{calculation.groupSurcharge}€</span></div>}
+                                                <div className="flex justify-between"><span>Show</span><span>+{calculation.showPrice}€</span></div>
+                                                {calculation.showBonus < 0 && <div className="flex justify-between text-green-400 font-bold border-t border-green-400/20 pt-2"><span>{content.quote.bonusLabel}</span><span>{calculation.showBonus}€</span></div>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-12 text-center space-y-8">
+                                        <div className="space-y-2 bg-white/5 py-10 rounded-sm">
+                                            <span className="text-[11px] uppercase tracking-[0.5em] opacity-50 font-light">{content.quote.total}</span>
+                                            <p className="text-5xl font-serif italic text-[#DBC7C3]">{calculation.total}€</p>
+                                        </div>
+                                        <button onClick={() => { setIsQuoteOpen(false); setIsEventCheckoutOpen(true); }} className="w-full py-5 font-bold uppercase text-[11px] tracking-[0.3em] shadow-2xl btn-transition border border-[#DBC7C3] bg-[#DBC7C3] text-[#5B0B23] hover:bg-white">{content.quote.btnBook}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Hero Section */}
+                    <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 bg-black/60 z-10"></div>
+                        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80" className="absolute inset-0 w-full h-full object-cover scale-105" alt="Hero" />
+                        <div className="relative z-20 text-center px-6 text-white space-y-8">
+                            <h2 className="text-[10px] md:text-[11px] uppercase tracking-[0.4em] opacity-80">{content.hero.sub}</h2>
+                            <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif leading-tight">{content.hero.title} <br/><span className="italic font-light text-[#DBC7C3] block mt-2">{content.hero.title2}</span></h1>
+                            <div className="flex flex-col sm:flex-row justify-center gap-5 pt-8">
+                                <button onClick={() => scrollTo('catering')} className="px-10 py-5 uppercase tracking-[0.2em] text-[10px] font-bold text-white shadow-2xl btn-transition bg-[#5B0B23] hover:bg-black">{content.hero.btn1}</button>
+                                <button onClick={() => scrollTo('viajes')} className="px-10 py-5 bg-white text-black uppercase tracking-[0.2em] text-[10px] font-bold shadow-2xl btn-transition hover:bg-gray-100">{content.hero.btn2}</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Catering Section */}
+                    <section id="catering" className="py-32 md:py-48 px-6 max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-2 gap-20 items-center text-left bg-white text-black">
+                        <div className="relative overflow-hidden group rounded-sm shadow-2xl">
+                            <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Catering" />
+                            <div className="absolute -bottom-4 -right-4 bg-white p-6 shadow-xl z-20 font-serif italic font-bold text-black">Staff ÂMÉ</div>
+                        </div>
+                        <div className="space-y-8 order-1 lg:order-2">
+                            <span className="uppercase tracking-[0.3em] text-[10px] font-bold border-l-4 pl-4 border-[#5B0B23] text-[#5B0B23]">{content.cat.tag}</span>
+                            <h2 className="text-5xl font-serif text-[#5B0B23] leading-tight">{content.cat.title}</h2>
+                            <p className="text-gray-500 italic text-lg leading-relaxed">{content.cat.desc}</p>
+                            
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="bg-[#FDF9F8] p-6 shadow-sm border border-gray-100 rounded-sm">
+                                    <h4 className="font-serif text-xl mb-2 text-[#5B0B23]">{content.cat.detail1}</h4>
+                                    <p className="text-xs text-gray-400 leading-relaxed">{content.cat.detail1Desc}</p>
+                                </div>
+                                <div className="bg-[#FDF9F8] p-6 shadow-sm border border-gray-100 rounded-sm">
+                                    <h4 className="font-serif text-xl mb-2 text-[#5B0B23]">{content.cat.detail2}</h4>
+                                    <p className="text-xs text-gray-400 leading-relaxed">{content.cat.detail2Desc}</p>
+                                </div>
+                            </div>
+
+                            <button onClick={() => setIsQuoteOpen(true)} className="px-12 py-5 bg-[#5B0B23] text-white font-bold uppercase text-[10px] hover:bg-black btn-transition shadow-xl tracking-widest">{content.cat.btn}</button>
+                        </div>
+                    </section>
+
+                    {/* Viajes Section */}
+                    <section id="viajes" className="py-24 md:py-32 bg-[#F9F4F3] px-6 text-black">
+                        <div className="max-w-7xl mx-auto text-center mb-16 space-y-4">
+                            <span className="uppercase tracking-[0.3em] text-[10px] font-bold text-[#5B0B23]">{content.trips.tag}</span>
+                            <h2 className="text-4xl md:text-5xl font-serif text-[#5B0B23] leading-tight font-bold">{content.trips.title}</h2>
+                            <p className="text-gray-500 max-w-2xl mx-auto text-sm leading-relaxed">{content.trips.desc}</p>
+                        </div>
+                        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
+                            {content.trips.packs.map(p => (
+                                <div key={p.id} className="bg-white shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden text-left">
+                                    <div className="h-72 overflow-hidden relative">
+                                        <img src={p.img} className="w-full h-full object-cover group-hover:scale-110 duration-700" alt={p.title} />
+                                    </div>
+                                    <div className="p-8 space-y-4">
+                                        <h3 className="text-xl font-serif text-[#5B0B23] h-12 leading-snug">{p.title}</h3>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center"><Icon name="map-pin" size={12} className="mr-2 text-[#5B0B23]" />{p.loc}</p>
+                                        <button onClick={() => setSelectedItinerary(p)} className="text-[10px] font-bold text-[#5B0B23] uppercase tracking-widest border-b border-[#5B0B23] pb-1 hover:border-black hover:text-black btn-transition">{lang === 'es' ? 'Ver Itinerario' : lang === 'fr' ? 'Voir Itinéraire' : 'View Itinerary'}</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Historia / Nosotros Section */}
+                    <section id="nosotros" className="py-32 px-6 max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-2 gap-20 items-center text-left bg-white text-black">
+                        <div className="space-y-8">
+                            <h2 className="text-5xl font-serif text-[#5B0B23] border-b border-[#5B0B23]/10 pb-4">{content.about.title}</h2>
+                            <div className="space-y-6 text-gray-600 font-serif italic text-lg leading-relaxed">
+                                <p className="first-letter:text-5xl first-letter:text-[#5B0B23] first-letter:float-left first-letter:mr-3">{content.about.p1}</p>
+                                <p>{content.about.p2}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-center">
+                                <div className="bg-[#FAF7F6] p-8 shadow-sm rounded-sm border border-[#5B0B23]/5">
+                                    <p className="text-4xl font-serif text-[#5B0B23] font-light">98%</p>
+                                    <p className="text-[9px] uppercase font-bold text-gray-500 tracking-[0.2em] mt-2">{content.about.stat1}</p>
+                                </div>
+                                <div className="bg-[#FAF7F6] p-8 shadow-sm rounded-sm border border-[#5B0B23]/5">
+                                    <p className="text-4xl font-serif text-[#5B0B23] font-light">100%</p>
+                                    <p className="text-[9px] uppercase font-bold text-gray-500 tracking-[0.2em] mt-2">{content.about.stat2}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="relative overflow-hidden rounded-sm shadow-2xl">
+                            <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80" className="w-full h-[500px] object-cover object-top scale-110" alt="Nosotros" />
+                        </div>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="bg-[#5B0B23] text-white py-24 px-6 text-left">
+                        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-16">
+                            <div className="space-y-6">
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-8 h-8 flex items-center justify-center border border-white font-serif font-bold italic">Â</div>
+                                    <span className="text-xl tracking-widest font-serif">ÂMÉ</span>
+                                </div>
+                                <p className="text-sm opacity-60 leading-relaxed max-w-xs">{content.footer.desc}</p>
+                                <div className="flex space-x-6 pt-4">
+                                    <a href="#" className="hover:text-[#DBC7C3] transition-colors"><Icon name="instagram" size={20}/></a>
+                                    <a href="#" className="hover:text-[#DBC7C3] transition-colors"><Icon name="facebook" size={20}/></a>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="font-serif text-lg border-b border-white/10 pb-4 mb-6 uppercase text-[10px] font-bold tracking-widest">{content.footer.services}</h4>
+                                <ul className="space-y-4 text-xs font-bold uppercase tracking-widest text-[#DBC7C3]">
+                                    <li className="cursor-pointer hover:text-white" onClick={() => scrollTo('catering')}>{lang === 'es' ? 'Catering en Francia' : lang === 'fr' ? 'Traiteur en France' : 'France Catering'}</li>
+                                    <li className="cursor-pointer hover:text-white" onClick={() => scrollTo('viajes')}>{lang === 'es' ? 'TURISMO PERÚ' : lang === 'fr' ? 'TOURISME PÉROU' : 'PERU TOURISM'}</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-serif text-lg border-b border-white/10 pb-4 mb-6 uppercase text-[10px] font-bold tracking-widest">{content.footer.contact}</h4>
+                                <ul className="space-y-4 text-sm opacity-80">
+                                    <li className="flex items-center"><Icon name="mail" size={16} className="mr-3" />contact@ame-culture.com</li>
+                                    <li className="flex items-center"><Icon name="phone" size={16} className="mr-3" />+33 (0)1 23 45 67 89</li>
+                                    <li className="text-[10px] italic opacity-40 uppercase pt-4 tracking-widest">Paris — Lyon — Lima</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="max-w-7xl mx-auto border-t border-white/5 mt-16 pt-8 text-[10px] uppercase tracking-[0.2em] text-center opacity-40 italic">
+                            © {new Date().getFullYear()} ÂMÉ — Gastronomie & Culture de Prestige
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
